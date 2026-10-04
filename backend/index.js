@@ -42,3 +42,30 @@ app.post('/api/registro', async (req, res) => {
 app.listen(PORT, () => {
     console.log(`Servidor backend corriendo en http://localhost:${PORT}`);
 });
+
+async function loginUsuario(req, res) {
+    try {
+    const { email, password } = req.body;
+if (!email || !password) {
+        return res.status(400).json({ error: "Faltan campos obligatorios" });
+    }
+ 
+    const usuario = usuariosDB.find(u => u.email === email);
+
+    if (!usuario) {
+        return res.status(401).json({ error: "Credenciales incorrectas" });
+    }
+
+    const contrasenaValida = await bcrypt.compare(password, usuario.password);
+
+    if (!contrasenaValida) {
+        return res.status(401).json({ error: "Credenciales incorrectas" });
+    }
+
+    return res.status(200).json({ message: "Login correcto" });
+}  catch (error) {
+    console.error("Error al iniciar sesión:", error);
+    return res.status(500).json({ error: "Error en el servidor al iniciar sesión" });
+}
+}
+app.post('/api/login', loginUsuario);
