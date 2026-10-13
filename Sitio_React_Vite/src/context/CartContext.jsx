@@ -1,9 +1,26 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
 const CartContext = createContext(null);
+const CLAVE = "ecotrend_carrito";
 
+   function leerCarrito() {
+     try {
+       const guardado = localStorage.getItem(CLAVE);
+       return guardado ? JSON.parse(guardado) : [];
+     } catch {
+       return [];
+     }
+   }
 export function CartProvider({ children }) {
-  const [items, setItems] = useState([]);
+  const [items, setItems] = useState(leerCarrito);
+
+   useEffect(() => {
+     try {
+       localStorage.setItem(CLAVE, JSON.stringify(items));
+     } catch {
+       // si el navegador no permite localStorage, el carrito sigue funcionando
+     }
+   }, [items]);
 
   const agregar = (producto) => {
     setItems((prev) => {
