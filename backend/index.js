@@ -7,6 +7,11 @@ const PORT = 5000;
 
 app.use(cors());
 app.use(express.json());
+const productos = require('./data/productos.json');
+
+app.get('/api/productos', (req, res) => {
+  res.json(productos);
+});
 
 const usuariosDB = [];
 
