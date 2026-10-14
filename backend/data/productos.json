@@ -1,0 +1,50 @@
+[
+  {
+    "id": 1,
+    "nombre": "Taza de cerámica sublimada",
+    "descripcion": "Taza de 11 oz con diseño personalizado y tintas de bajo impacto.",
+    "precio": 129,
+    "stock": 25,
+    "imagen": ""
+  },
+  {
+    "id": 2,
+    "nombre": "Termo de acero inoxidable",
+    "descripcion": "Reutilizable, mantiene la temperatura por 12 horas.",
+    "precio": 349,
+    "stock": 15,
+    "imagen": ""
+  },
+  {
+    "id": 3,
+    "nombre": "Playera de algodón orgánico",
+    "descripcion": "Algodón certificado, estampado por sublimación.",
+    "precio": 259,
+    "stock": 40,
+    "imagen": ""
+  },
+  {
+    "id": 4,
+    "nombre": "Tote bag de algodón",
+    "descripcion": "Alternativa duradera a las bolsas de plástico.",
+    "precio": 99,
+    "stock": 60,
+    "imagen": ""
+  },
+  {
+    "id": 5,
+    "nombre": "Mousepad de corcho",
+    "descripcion": "Base de corcho natural con diseño personalizado.",
+    "precio": 149,
+    "stock": 30,
+    "imagen": ""
+  },
+  {
+    "id": 6,
+    "nombre": "Libreta de papel reciclado",
+    "descripcion": "Tapa sublimada y hojas de papel 100% reciclado.",
+    "precio": 89,
+    "stock": 50,
+    "imagen": ""
+  }
+]

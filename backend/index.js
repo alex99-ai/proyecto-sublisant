@@ -7,7 +7,39 @@ const PORT = 5000;
 
 app.use(cors());
 app.use(express.json());
+const productos = require('./data/productos.json');
 
+app.get('/api/productos', (req, res) => {
+  res.json(productos);
+});
+app.post('/api/carrito/validar', (req, res) => {
+  const { items } = req.body;
+  if (!Array.isArray(items)) {
+    return res.status(400).json({ error: "El carrito debe ser una lista de productos" });
+  }
+
+  const problemas = [];
+  for (const item of items) {
+    const producto = productos.find(p => p.id === item.id);
+    if (!producto) {
+      problemas.push({ id: item.id, mensaje: "Un producto del carrito ya no existe" });
+    } else if (!Number.isInteger(item.cantidad) || item.cantidad < 1) {
+      problemas.push({ id: item.id, mensaje: `Cantidad no válida para ${producto.nombre}` });
+    } else if (item.cantidad > producto.stock) {
+      problemas.push({
+        id: item.id,
+        mensaje: `Solo hay ${producto.stock} disponibles de ${producto.nombre}`,
+        disponible: producto.stock
+      });
+    }
+  }
+
+  if (problemas.length > 0) {
+    return res.status(409).json({ ok: false, problemas });
+  }
+
+  res.json({ ok: true, mensaje: "Todo el carrito está disponible" });
+});
 const usuariosDB = [];
 
 app.post('/api/registro', async (req, res) => {

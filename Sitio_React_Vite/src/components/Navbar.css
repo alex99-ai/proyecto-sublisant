@@ -1,0 +1,42 @@
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 10px 20px;
+  background: #e8f3ec;
+  border-bottom: 1px solid #d9e6dd;
+}
+
+.navbar__marca {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-decoration: none;
+  color: #2f6f4e;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.navbar__marca img { 
+  height: 44px; 
+  border-radius: 6px; 
+}
+
+.navbar__links { 
+  display: flex; 
+  gap: 16px; 
+  align-items: center; 
+  flex-wrap: wrap; 
+}
+
+.navbar__links a { 
+  text-decoration: none; 
+  color: #2f6f4e; 
+  font-weight: 600; 
+}
+
+.navbar__links a.active { 
+  text-decoration: underline; 
+}

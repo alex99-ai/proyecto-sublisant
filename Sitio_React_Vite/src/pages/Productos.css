@@ -34,3 +34,19 @@
 .product-card p { color: #555; font-size: 0.9rem; }
 .product-card__footer { display: flex; justify-content: space-between; align-items: center; }
 .product-card__footer strong { color: var(--tierra); }
+.product-card__boton {
+  width: 100%;
+  margin-top: 12px;
+  padding: 8px;
+  border: none;
+  border-radius: 8px;
+  background: var(--verde);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.product-card__boton:disabled {
+  background: #b8c7bd;
+  cursor: not-allowed;
+}
