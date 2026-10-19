@@ -1,8 +1,10 @@
 import { NavLink } from "react-router-dom";
 import "./Navbar.css";
 import logo from "../assets/sublisant.jpg";
+import { useCart } from "../context/CartContext";
 
 function Navbar() {
+  const { totalArticulos } = useCart();
   return (
     <nav className="navbar">
       <NavLink className="navbar__marca" to="/">
@@ -11,6 +13,7 @@ function Navbar() {
       </NavLink>
       <div className="navbar__links">
         <NavLink to="/productos">Productos</NavLink>
+        <NavLink to="/carrito">Carrito ({totalArticulos})</NavLink>
         <NavLink to="/login">Iniciar sesión</NavLink>
         <NavLink to="/registro">Crear cuenta</NavLink>
       </div>
