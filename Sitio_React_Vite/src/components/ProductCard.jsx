@@ -10,7 +10,8 @@ function ProductCard({ producto }) {
     <article className="product-card">
       <div className="product-card__img">
         {producto.imagen ? (
-          <img src={producto.imagen} alt={producto.nombre} loading="lazy" />
+          <img src={producto.imagen} alt={producto.nombre} loading="lazy"
+decoding="async" />
         ) : (
           <span>🛒</span>
         )}

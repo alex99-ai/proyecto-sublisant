@@ -41,3 +41,55 @@
 }
 
 .carrito__mensaje { margin-top: 14px; font-weight: 600; color: #2f6f4e; }
+.carrito__checkout-box {
+  margin-top: 1.5rem;
+  padding: 1.25rem;
+  border: 1px solid #d0e2d4;
+  border-radius: 8px;
+  background-color: #f7fbf8;
+}
+
+.carrito__checkout-box h3 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  color: #1b4332;
+  font-size: 1.1rem;
+}
+
+.carrito__envio-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.carrito__envio-form label {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.9rem;
+  font-weight: 600;
+  gap: 0.35rem;
+  flex: 1;
+  min-width: 200px;
+}
+
+.carrito__envio-form input,
+.carrito__envio-form select {
+  padding: 0.5rem;
+  border: 1px solid #b7cbbd;
+  border-radius: 6px;
+  font-size: 0.95rem;
+}
+
+.carrito__desglose p {
+  display: flex;
+  justify-content: space-between;
+  margin: 0.4rem 0;
+  font-size: 0.95rem;
+}
+
+.carrito__desglose hr {
+  border: none;
+  border-top: 1px dashed #c8dacc;
+  margin: 0.75rem 0;
+}
