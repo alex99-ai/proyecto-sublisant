@@ -1,9 +1,13 @@
+require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
 
+const STRIPE_KEY = process.env.STRIPE_SECRET_KEY || 'sk_test_51MockEcoTrendKey';
+const stripe = require('stripe')(STRIPE_KEY);
+
 const app = express();
-const PORT = 5000;
+const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
@@ -55,11 +59,10 @@ app.post('/api/registro', async (req, res) => {
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    // Guardar el usuario con la contraseña protegida
     const nuevoUsuario = {
       id: usuariosDB.length + 1,
       email: email,
-      password: hashedPassword // 👈 Guardamos la versión encriptada, nunca la real
+      password: hashedPassword
     };
 
     usuariosDB.push(nuevoUsuario);
@@ -98,7 +101,6 @@ async function loginUsuario(req, res) {
   }
 }
 app.post('/api/login', loginUsuario);
-
 
 const TASA_IVA = 0.16;
 
@@ -194,6 +196,172 @@ app.post('/api/checkout/calcular-costos', (req, res) => {
     console.error("Error al calcular costos:", error);
     return res.status(500).json({ error: "Error en el motor de costos" });
   }
+});
+
+
+const pedidosDB = [];
+
+// Función auxiliar Tarea 8.1: Generador de guía según paquetería
+function generarGuiaEnvio(paqueteria = "estandar") {
+  const prefijos = {
+    estandar: "EST-MX",
+    fedex: "FDX-NAC",
+    express: "DHL-EXP"
+  };
+  const prefijo = prefijos[paqueteria] || "ECO-ENV";
+  const randomNum = Math.floor(100000000 + Math.random() * 900000000);
+  return `${prefijo}-${randomNum}`;
+}
+
+app.post('/api/checkout/crear-intento-pago', async (req, res) => {
+  try {
+    const { items = [], codigoPostal = "45650", paqueteria = "estandar", totalFinal, emailCliente } = req.body;
+
+    if (!totalFinal || totalFinal <= 0) {
+      return res.status(400).json({ error: "El monto total a cobrar no es válido" });
+    }
+
+    const montoCentavos = Math.round(Number(totalFinal) * 100);
+    let clientSecret = `pi_sandbox_${Date.now()}_secret_${Math.random().toString(36).substring(2, 8)}`;
+    let paymentIntentId = `pi_${Date.now()}`;
+
+    if (process.env.STRIPE_SECRET_KEY && process.env.STRIPE_SECRET_KEY.startsWith('sk_test_') && !process.env.STRIPE_SECRET_KEY.includes('Mock')) {
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: montoCentavos,
+        currency: 'mxn',
+        payment_method_types: ['card'],
+        metadata: { codigoPostal, paqueteria, emailCliente: emailCliente || "cliente@ecotrend.mx" }
+      });
+      clientSecret = paymentIntent.client_secret;
+      paymentIntentId = paymentIntent.id;
+    }
+
+    const nuevoPedido = {
+      idOrden: `ORD-${pedidosDB.length + 1001}`,
+      paymentIntentId,
+      items,
+      codigoPostal,
+      paqueteria,
+      totalFinal: Number(totalFinal),
+      emailCliente: emailCliente || "cliente@ecotrend.mx",
+      estadoPago: "Pendiente",
+      numeroGuia: null,
+      historialTracking: [],
+      fechaCreacion: new Date().toISOString()
+    };
+
+    pedidosDB.push(nuevoPedido);
+
+    return res.status(200).json({
+      clientSecret,
+      paymentIntentId,
+      idOrden: nuevoPedido.idOrden
+    });
+  } catch (error) {
+    console.error("Error al crear PaymentIntent:", error);
+    return res.status(500).json({ error: "No se pudo iniciar la transacción con Stripe" });
+  }
+});
+
+app.post('/api/checkout/confirmar-pago', (req, res) => {
+  try {
+    const { paymentIntentId, ultimos4, marcaTarjeta = "Visa", simularFallo = false, emailCliente } = req.body;
+
+    const pedido = pedidosDB.find(p => p.paymentIntentId === paymentIntentId);
+    if (!pedido) {
+      return res.status(404).json({ error: "No se encontró la orden asociada al intento de pago" });
+    }
+
+    if (pedido.estadoPago === "Pagado") {
+      return res.status(409).json({
+        error: "Este pedido ya fue cobrado previamente. Se bloqueó el cargo duplicado.",
+        pedido
+      });
+    }
+
+    if (simularFallo || ultimos4 === "0002") {
+      pedido.estadoPago = "Fallido";
+      return res.status(402).json({
+        ok: false,
+        estadoPago: "Fallido",
+        error: "Transacción declinada por el banco emisor (Fondos insuficientes o tarjeta rechazada)."
+      });
+    }
+
+    pedido.estadoPago = "Pagado";
+    pedido.metodoPago = `${marcaTarjeta} terminación **** ${ultimos4 || "4242"}`;
+    pedido.fechaPago = new Date().toISOString();
+    if (emailCliente) pedido.emailCliente = emailCliente;
+
+    for (const item of pedido.items) {
+      const prod = productos.find(p => p.id === item.id);
+      if (prod && prod.stock >= item.cantidad) {
+        prod.stock -= item.cantidad;
+      }
+    }
+
+    const guia = generarGuiaEnvio(pedido.paqueteria);
+    pedido.numeroGuia = guia;
+    pedido.historialTracking = [
+      { fecha: new Date().toLocaleString('es-MX'), estado: "Pago confirmado y orden recibida en almacén EcoTrend", ubicacion: "Guadalajara, JAL" },
+      { fecha: new Date().toLocaleString('es-MX'), estado: "Guía generada y paquete recolectado por transportista", ubicacion: "Centro de Distribución Occidente" },
+      { fecha: "En curso", estado: `En tránsito hacia CP ${pedido.codigoPostal}`, ubicacion: "Ruta Nacional" }
+    ];
+
+    const notificacionCorreo = {
+      destinatario: pedido.emailCliente,
+      asunto: `Confirmación de compra ${pedido.idOrden} y Guía de Rastreo ${guia}`,
+      mensaje: `Hola, tu pago por $${pedido.totalFinal.toFixed(2)} MXN fue exitoso. Rastrea tu paquete sustentable con la guía: ${guia}`,
+      enviado: true,
+      timestamp: new Date().toISOString()
+    };
+    pedido.notificacionCorreo = notificacionCorreo;
+
+    console.log(`[STRIPE WEBHOOK / PAGO EXITOSO] Orden: ${pedido.idOrden} | Estado: Pagado | Guía: ${guia} | Correo enviado a: ${pedido.emailCliente}`);
+
+    return res.status(200).json({
+      ok: true,
+      mensaje: "Pago confirmado exitosamente",
+      pedido
+    });
+  } catch (error) {
+    console.error("Error al confirmar pago:", error);
+    return res.status(500).json({ error: "Error interno al confirmar el pago" });
+  }
+});
+
+app.post('/api/webhook/stripe', (req, res) => {
+  const event = req.body;
+
+  if (event.type === 'payment_intent.succeeded') {
+    const paymentIntent = event.data.object;
+    const pedido = pedidosDB.find(p => p.paymentIntentId === paymentIntent.id);
+    if (pedido && pedido.estadoPago !== "Pagado") {
+      pedido.estadoPago = "Pagado";
+      pedido.numeroGuia = generarGuiaEnvio(pedido.paqueteria);
+    }
+  }
+  res.json({ received: true });
+});
+
+app.get('/api/logistica/rastreo/:guia', (req, res) => {
+  const { guia } = req.params;
+  const pedido = pedidosDB.find(p => p.numeroGuia && p.numeroGuia.toUpperCase() === guia.toUpperCase());
+
+  if (!pedido) {
+    return res.status(404).json({
+      error: "No se encontró ningún envío con ese número de guía. Verifica que esté bien escrito."
+    });
+  }
+
+  return res.status(200).json({
+    idOrden: pedido.idOrden,
+    numeroGuia: pedido.numeroGuia,
+    paqueteria: pedido.paqueteria === "express" ? "DHL Express" : pedido.paqueteria === "fedex" ? "FedEx Nacional" : "Estafeta Estándar",
+    codigoPostalDestino: pedido.codigoPostal,
+    estadoActual: "En tránsito",
+    historial: pedido.historialTracking
+  });
 });
 
 app.listen(PORT, () => {
