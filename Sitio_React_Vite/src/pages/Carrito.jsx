@@ -361,7 +361,7 @@ function Carrito() {
           </div>
 
           <p style={{ fontSize: "0.9rem", color: "#525f7f", marginTop: "8px" }}>
-            Tarjetas de prueba Stripe (Tarea 6.4): Usa <strong>4242 4242 4242 4242</strong> para pago exitoso o <strong>4000 0000 0000 0002</strong> para simular tarjeta declinada.
+            Tarjetas de prueba Stripe: Usa <strong>4242 4242 4242 4242</strong> para pago exitoso o <strong>4000 0000 0000 0002</strong> para simular tarjeta declinada.
           </p>
 
           {/* Pantalla clara de error de pago con opción de reintento (Tarea 7.3) */}
